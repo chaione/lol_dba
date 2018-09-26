@@ -27,7 +27,7 @@ module LolDba
         connection.class.send(:define_method, :change_column) { |*_args| [] }
         connection.class.send(:define_method, :rename_column) { |*_args| [] }
         connection.class.send(:define_method, :tables) { |*_args| [] }
-        connection.class.send(:define_method, :select_all) { |*_args| [] }
+        connection.class.send(:define_method, :select_all) { |*_args| ActiveRecord::Result.new([], []) }
         connection.class.send(:define_method, :indexes) { |*_args| [] }
         # returns always the default(args[2])
         connection.class.send(:define_method, :index_name_exists?) { |*args| args[2] }
