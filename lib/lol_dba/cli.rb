@@ -1,5 +1,5 @@
 require 'optparse'
-require 'lol_dba/sql_generator'
+require 'lol_dba'
 require 'lol_dba/version'
 
 module LolDba
