@@ -6,15 +6,21 @@ module LolDba
   class CLI
     class << self
       def start
+        new(Dir.pwd, parse_options).start(ARGV.first)
+      end
+
+      def parse_options
         options = {}
         OptionParser.new do |opts|
-          opts.on('-d', '--debug', 'Show stack traces when an error occurs.') { |v| options[:debug] = v }
+          opts.on('-d', '--debug',
+                  'Show stack traces when an error occurs.') do |opt|
+            options[:debug] = opt
+          end
           opts.on_tail('-v', '--version', 'Show version') do
             puts LolDba::VERSION
             exit
           end
         end.parse!
-        new(Dir.pwd, options).start
       end
     end
 
@@ -23,25 +29,28 @@ module LolDba
       @options = options
     end
 
-    def start
+    def start(arg)
       load_application
-      arg = ARGV.first
-      if arg =~ /db:find_indexes/
-        LolDba.simple_migration
-      elsif arg !~ /\[/
-        LolDba::SqlGenerator.generate('all')
-      else
-        which = arg.match(/.*\[(.*)\].*/).captures[0]
-        LolDba::SqlGenerator.generate(which)
-      end
-    rescue Exception => e
+      select_action(arg)
+    rescue Exception => exception
       if @options[:debug]
-        warn "Failed: #{e.class}: #{e.message}"
-        warn e.backtrace.map { |t| "    from #{t}" }
+        warn "Failed: #{exception.class}: #{exception.message}"
+        warn exception.backtrace.map { |trace| "    from #{trace}" }
       end
     end
 
     protected
+
+    def select_action(arg)
+      if arg =~ /db:find_indexes/
+        LolDba::IndexFinder.run
+      elsif arg !~ /\[/
+        LolDba::SqlGenerator.run('all')
+      else
+        which = arg.match(/.*\[(.*)\].*/).captures[0]
+        LolDba::SqlGenerator.run(which)
+      end
+    end
 
     # Tks to https://github.com/voormedia/rails-erd/blob/master/lib/rails_erd/cli.rb
     def load_application
